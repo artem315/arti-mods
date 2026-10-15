@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: arti-mods
+    runtime: node
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 24.19.0
+      - key: NODE_ENV
+        value: production
+      - key: DEMO_MODE
+        value: "true"
+      - key: VIRUSTOTAL_API_KEY
+        sync: false
