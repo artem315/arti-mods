@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 const dir=await mkdtemp(path.join(os.tmpdir(),'arti-test-'));
 process.env.NODE_ENV='test';process.env.DATA_DIR=dir;
-const {server,verdict,scanNext}=await import('./server.mjs');
+const {server,verdict,scanNext,closeResources}=await import('./server.mjs');
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const base='http://127.0.0.1:'+server.address().port;
 const req=(p,init={})=>fetch(base+p,init);
@@ -36,4 +36,4 @@ try{await scanNext();}finally{globalThis.fetch=original;Date.now=now;delete proc
 assert.equal((await (await req('/api/mods')).json()).mods[0].status,'clean');
 const download=await req('/api/mods/'+id+'/download');assert.equal(download.status,200);assert.deepEqual(Buffer.from(await download.arrayBuffer()),Buffer.from([0x50,0x4b,3,4,0]));
 });
-test.after(async()=>{await new Promise(r=>server.close(r));try{await rm(dir,{recursive:true,force:true});}catch{/* SQLite can hold a Windows file handle until process exit. */}});
+test.after(async()=>{await new Promise(r=>server.close(r));await closeResources();await rm(dir,{recursive:true,force:true});});

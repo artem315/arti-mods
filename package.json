@@ -1,1 +1,1 @@
-{"name":"arti-mods","version":"1.0.0","private":true,"type":"module","engines":{"node":">=24"},"scripts":{"start":"node server.mjs","test":"node --test test.mjs"}}
+{"name":"arti-mods","version":"1.0.0","private":true,"type":"module","engines":{"node":">=24"},"scripts":{"start":"node server.mjs","test":"node --test test.mjs"},"dependencies":{"@supabase/supabase-js":"2.117.3","pg":"8.23.1"}}
