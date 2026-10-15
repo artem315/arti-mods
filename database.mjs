@@ -1,6 +1,7 @@
 import {DatabaseSync} from 'node:sqlite';
 import {mkdir} from 'node:fs/promises';
 import path from 'node:path';
+import {readFileSync} from 'node:fs';
 
 // PostgreSQL tables live outside the public/Data API schema.
 export const schema = `
@@ -23,7 +24,15 @@ function normalize(row){return row&&Object.fromEntries(Object.entries(row).map((
 export async function openDatabase(data) {
   if(process.env.DATABASE_URL){
     const {Pool}=await import('pg');
-    const pool=new Pool({connectionString:process.env.DATABASE_URL,max:3,connectionTimeoutMillis:15000,idleTimeoutMillis:30000,options:'-c search_path=arti'});
+    const connection=new URL(process.env.DATABASE_URL);
+    let ssl;
+    const certificate=process.env.DATABASE_CA_CERT||(process.env.SUPABASE_URL?new URL('./supabase-ca.crt',import.meta.url):null);
+    if(certificate){
+      // pg's URL SSL options override the object; keep verification explicit.
+      for(const key of ['sslmode','sslcert','sslkey','sslrootcert'])connection.searchParams.delete(key);
+      ssl={ca:readFileSync(certificate,'utf8'),rejectUnauthorized:true};
+    }
+    const pool=new Pool({connectionString:connection.toString(),...(ssl?{ssl}:{}),max:3,connectionTimeoutMillis:15000,idleTimeoutMillis:30000,options:'-c search_path=arti'});
     pool.on('error',()=>console.error('Database connection interrupted'));
     await pool.query('CREATE SCHEMA IF NOT EXISTS arti');
     await pool.query('REVOKE ALL ON SCHEMA arti FROM PUBLIC');
